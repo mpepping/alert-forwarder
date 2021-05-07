@@ -1,4 +1,6 @@
-## alert-forwarder: alert receiver implementation of Webhook type for Prometheus AlertManager
+## alert-forwarder
+
+`alert-forwarder` is an alert receiver implementation of Webhook type for Prometheus AlertManager.
 
 `alert-forwarder` forwards alerts from AlertManager to Splunk HEC (HTTP Event Collector).
 
