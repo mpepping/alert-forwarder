@@ -1,0 +1,82 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alert-forwarder-config
+  namespace: cattle-monitoring-system
+type: Opaque
+stringData:
+  alert-forwarder-config.yaml: |
+    silenced: false
+    log.level: debug
+    watchdog.check_interval: 30
+    watchdog.alert_interval: 7200
+    watchdog.timeout: 900
+    event.host: "us-east1-01"
+    event.sourceType: "prometheus_alerts"
+    collector.host: "hec.example.com"
+    collector.protocol: "https"
+    collector.port: 8088
+    collector.token: "xxxxxxxx"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-forwarder
+  namespace: cattle-monitoring-system
+spec:
+  selector:
+    matchLabels:
+       k8s-app: alert-forwarder
+  replicas: 2
+  template:
+    metadata:
+      labels:
+         k8s-app: alert-forwarder
+    spec:
+      containers:
+      - name: alert-forwarder
+        image: iafeoktistov/alert-forwarder:1.0.3
+        imagePullPolicy: IfNotPresent
+        command: ["alert-forwarder", "--config=/usr/local/etc/alert-forwarder-config.yaml"]
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 8888
+        volumeMounts:
+        - name: alert-forwarder-config
+          mountPath: /usr/local/etc
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8888
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8888
+          initialDelaySeconds: 10
+      volumes:
+        - name: alert-forwarder-config
+          secret:
+            secretName: alert-forwarder-config
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-forwarder
+  namespace: cattle-monitoring-system
+spec:
+  selector:
+    k8s-app: alert-forwarder
+  ports:
+  - protocol: TCP
+    port: 8888
+    targetPort: 8888

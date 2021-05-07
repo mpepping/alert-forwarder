@@ -1,0 +1,11 @@
+silenced: false
+log.level: debug
+watchdog.check_interval: 30
+watchdog.alert_interval: 7200
+watchdog.timeout: 900
+event.host: "us-east1-01"
+event.sourceType: "prometheus_alerts"
+collector.host: "hec.example.com"
+collector.protocol: "https"
+collector.port: 8088
+collector.token: "xxxxxxxx"
