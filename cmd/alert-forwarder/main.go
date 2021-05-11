@@ -22,6 +22,7 @@ import (
 
 const (
 	CONFIGPATH = "/etc/alert-forwarder-config.yaml"
+	VERSION = "1.0.4"
 )
 
 type Configuration struct {
@@ -173,12 +174,12 @@ func sendToSplunk(alert template.Alert) {
 	}
 	if conf.Silenced == false {
 		if err := client.WriteEvent(event); err == nil {
-			log.Infof("(alert %s, severity %s) --> sent to Splunk", alert.Labels["alertname"], severity)
+			log.Infof("(alert=%s, severity=%s, status=%s) --> sent to Splunk", alert.Labels["alertname"], severity, alert.Status)
 		} else {
 			log.Errorf("sendToSplunk(): error: %s", err)
 		}
 	} else {
-		log.Infof("(alert %s, severity %s) --> silenced", alert.Labels["alertname"], severity)
+		log.Infof("(alert=%s, severity=%s, status=%s) --> silenced", alert.Labels["alertname"], severity, alert.Status)
 	}
 }
 
@@ -277,6 +278,7 @@ func main() {
 	} else {
 		listenAddress = ":8888"
 	}
+	log.Infof("alert-forwarder v%s", VERSION)
 	log.Infof("listening on: %s", listenAddress)
 	go checkWatchdog()
 	go reloadConfig()

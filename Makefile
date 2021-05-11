@@ -4,7 +4,7 @@ IMAGE := $(REGISTRY)/$(PROJECT)
 SRCDIRS := ./cmd/alert-forwarder
 PKGS := $(shell go list ./cmd/...)
 
-VERSION ?= 1.0.3
+VERSION ?= 1.0.4
 
 all: build install
 
