@@ -1,7 +1,7 @@
-FROM golang:1.14-alpine
+FROM golang:1.21-alpine
 
 COPY ./cmd /go/src/alert-forwarder/cmd
-COPY ./go.mod go.sum /go/src/alert-forwarder
+COPY ./go.mod go.sum /go/src/alert-forwarder/
 
 WORKDIR /go/src/alert-forwarder
 

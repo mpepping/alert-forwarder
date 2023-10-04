@@ -11,7 +11,6 @@ import (
 	"time"
 	"sync"
 	"crypto/tls"
-	"io/ioutil"
 	"gopkg.in/yaml.v2"
 
 	log "github.com/sirupsen/logrus"
@@ -59,7 +58,7 @@ var confSync sync.Mutex
 
 func NewConfiguration(filePath string) (*Configuration, error) {
 	c := &Configuration{}
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return c, err
 	}

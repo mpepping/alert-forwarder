@@ -23,5 +23,5 @@ image:
 
 push:
 	docker push $(IMAGE):$(VERSION)
-    
+
 .PHONY: all
