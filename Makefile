@@ -18,10 +18,22 @@ gofmt:
 	@echo Checking code is gofmted
 	@test -z "$(shell gofmt -s -l -d -e $(SRCDIRS) | tee /dev/stderr)"
 
+vet:
+	go vet ./...
+
+lint:
+	golangci-lint run ./...
+
+test:
+	go test -race -count=1 ./...
+
+tidy:
+	go mod tidy
+
 image:
 	docker build . -t $(IMAGE):$(VERSION)
 
 push:
 	docker push $(IMAGE):$(VERSION)
 
-.PHONY: all
+.PHONY: all build install gofmt vet lint test tidy image push

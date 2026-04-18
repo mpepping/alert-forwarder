@@ -1,13 +1,34 @@
-FROM golang:1.21-alpine
+# syntax=docker/dockerfile:1.7
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine3.23 AS builder
 
-COPY ./cmd /go/src/alert-forwarder/cmd
-COPY ./go.mod go.sum /go/src/alert-forwarder/
+WORKDIR /src
 
-WORKDIR /go/src/alert-forwarder
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux go install -ldflags="-w -s" -v ./cmd/alert-forwarder/...
+COPY cmd ./cmd
 
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates
-COPY --from=0 /go/bin/alert-forwarder /bin/alert-forwarder
-CMD ["/bin/alert-forwarder"]
+ARG TARGETOS
+ARG TARGETARCH
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags="-w -s" -o /out/alert-forwarder ./cmd/alert-forwarder
+
+FROM alpine:3.23
+
+RUN apk --no-cache add ca-certificates tzdata \
+ && addgroup -S app \
+ && adduser -S -G app app
+
+COPY --from=builder /out/alert-forwarder /usr/local/bin/alert-forwarder
+
+USER app:app
+EXPOSE 8888
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget -qO- http://127.0.0.1:8888/healthz || exit 1
+
+ENTRYPOINT ["/usr/local/bin/alert-forwarder"]

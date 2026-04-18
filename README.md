@@ -1,5 +1,9 @@
 ## alert-forwarder
 
+[![ci](https://github.com/mpepping/alert-forwarder/actions/workflows/ci.yml/badge.svg)](https://github.com/mpepping/alert-forwarder/actions/workflows/ci.yml)
+[![codeql](https://github.com/mpepping/alert-forwarder/actions/workflows/codeql.yml/badge.svg)](https://github.com/mpepping/alert-forwarder/actions/workflows/codeql.yml)
+[![docker](https://github.com/mpepping/alert-forwarder/actions/workflows/docker.yml/badge.svg)](https://github.com/mpepping/alert-forwarder/actions/workflows/docker.yml)
+
 `alert-forwarder` is an alert receiver implementation of Webhook type for Prometheus AlertManager.
 
 `alert-forwarder` forwards alerts from AlertManager to Splunk HEC (HTTP Event Collector).
@@ -38,7 +42,7 @@ collector.token: "xxxxxxxx"
 
 Requirements for building
 
-- Go (version 1.21 or higher)
+- Go (version 1.26 or higher)
 - [docker](https://www.docker.com/) for image building
 
 A Makefile is provided for building tasks.
@@ -49,3 +53,14 @@ make build
 make install
 make image
 make push
+```
+
+### Development
+
+```bash
+make tidy   # go mod tidy
+make gofmt  # gofmt check
+make vet    # go vet
+make lint   # golangci-lint
+make test   # go test -race
+```

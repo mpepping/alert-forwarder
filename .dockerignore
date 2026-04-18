@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+.dockerignore
+.golangci.yml
+Makefile
+README.md
+LICENSE
+SECURITY.md
+CONTRIBUTING.md
+*.md
+bin/
+dist/
+manifests/

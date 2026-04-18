@@ -1,27 +1,27 @@
 package main
 
 import (
-	"errors"
+	"crypto/tls"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"flag"
-	"strconv"
+	"fmt"
 	"net/http"
 	"os"
-	"time"
+	"strconv"
 	"sync"
-	"crypto/tls"
-	"gopkg.in/yaml.v2"
+	"time"
 
-	log "github.com/sirupsen/logrus"
+	hec "github.com/fuyufjh/splunk-hec-go"
 	template "github.com/prometheus/alertmanager/template"
 	model "github.com/prometheus/common/model"
-	hec "github.com/fuyufjh/splunk-hec-go"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 const (
 	CONFIGPATH = "/etc/alert-forwarder-config.yaml"
-	VERSION = "1.0.4"
+	VERSION    = "1.0.4"
 )
 
 type Configuration struct {
@@ -45,10 +45,10 @@ type responseJSON struct {
 }
 
 type Watchdog struct {
-	sync sync.Mutex
+	sync           sync.Mutex
 	lastFiringTime time.Time
-	lastAlertTime time.Time
-	state string
+	lastAlertTime  time.Time
+	state          string
 }
 
 var configPath string
@@ -117,7 +117,7 @@ func reloadConfig() {
 		if fileInfo.ModTime().After(loadedConf.LastUpdated) {
 			var newConf *Configuration
 			if newConf, err = NewConfiguration(configPath); err != nil {
-				log.Errorf("failure to load configuration: " + err.Error())
+				log.Errorf("failure to load configuration: %s", err.Error())
 			} else {
 				confSync.Lock()
 				loadedConf = newConf
@@ -136,7 +136,7 @@ func asJson(w http.ResponseWriter, status int, message string) {
 	bytes, _ := json.Marshal(data)
 	json := string(bytes[:])
 	w.WriteHeader(status)
-	fmt.Fprint(w, json)
+	_, _ = fmt.Fprint(w, json)
 }
 
 func watchdogAlert(status string, startsAt time.Time, endsAt time.Time) (alert *template.Alert) {
@@ -144,13 +144,13 @@ func watchdogAlert(status string, startsAt time.Time, endsAt time.Time) (alert *
 	annotations := make(map[string]string)
 	labels["alertname"] = "Watchdog"
 	labels["severity"] = "critical"
-	annotations["message"] = fmt.Sprintf("Prometheus AlertManager alerting pipeline is not functional. Watchdog alert is not firing for longer than %d minutes", conf.WatchdogTimeout / 60)
+	annotations["message"] = fmt.Sprintf("Prometheus AlertManager alerting pipeline is not functional. Watchdog alert is not firing for longer than %d minutes", conf.WatchdogTimeout/60)
 	alert = &template.Alert{
-		Status: status,
-		Labels: labels,
+		Status:      status,
+		Labels:      labels,
 		Annotations: annotations,
-		StartsAt: startsAt,
-		EndsAt: endsAt,
+		StartsAt:    startsAt,
+		EndsAt:      endsAt,
 		Fingerprint: fmt.Sprintf("%016x", model.LabelsToSignature(labels)),
 	}
 	return
@@ -159,7 +159,7 @@ func watchdogAlert(status string, startsAt time.Time, endsAt time.Time) (alert *
 func sendToSplunk(alert template.Alert) {
 	collectorUrl := conf.CollectorProtocol + "://" + conf.CollectorHost + ":" + strconv.Itoa(conf.CollectorPort)
 	client := hec.NewCluster([]string{collectorUrl, collectorUrl}, conf.CollectorToken)
-	client.SetHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true},}})
+	client.SetHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}})
 	event := hec.NewEvent(alert)
 	event.SetTime(time.Now())
 	event.SetHost(conf.EventHost)
@@ -244,7 +244,7 @@ func webhook(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthz(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Ok!")
+	_, _ = fmt.Fprint(w, "Ok!")
 }
 
 func main() {
@@ -266,8 +266,8 @@ func main() {
 	conf = loadedConf
 	watchdog = &Watchdog{
 		lastFiringTime: time.Now(),
-		lastAlertTime: time.Now().Add(time.Duration(-conf.WatchdogAlertInterval) * time.Second),
-		state: "firing",
+		lastAlertTime:  time.Now().Add(time.Duration(-conf.WatchdogAlertInterval) * time.Second),
+		state:          "firing",
 	}
 	http.HandleFunc("/healthz", healthz)
 	http.HandleFunc("/alerts", webhook)
