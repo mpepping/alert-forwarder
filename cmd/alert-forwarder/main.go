@@ -1,3 +1,5 @@
+// Package main implements an alert receiver webhook for Prometheus AlertManager
+// that forwards alerts to Splunk HEC.
 package main
 
 import (
@@ -128,7 +130,7 @@ func reloadConfig() {
 	}
 }
 
-func asJson(w http.ResponseWriter, status int, message string) {
+func asJSON(w http.ResponseWriter, status int, message string) {
 	data := responseJSON{
 		Status:  status,
 		Message: message,
@@ -157,8 +159,8 @@ func watchdogAlert(status string, startsAt time.Time, endsAt time.Time) (alert *
 }
 
 func sendToSplunk(alert template.Alert) {
-	collectorUrl := conf.CollectorProtocol + "://" + conf.CollectorHost + ":" + strconv.Itoa(conf.CollectorPort)
-	client := hec.NewCluster([]string{collectorUrl, collectorUrl}, conf.CollectorToken)
+	collectorURL := conf.CollectorProtocol + "://" + conf.CollectorHost + ":" + strconv.Itoa(conf.CollectorPort)
+	client := hec.NewCluster([]string{collectorURL, collectorURL}, conf.CollectorToken)
 	client.SetHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}})
 	event := hec.NewEvent(alert)
 	event.SetTime(time.Now())
@@ -171,7 +173,7 @@ func sendToSplunk(alert template.Alert) {
 	if severity, ok = alert.Labels["severity"]; !ok {
 		severity = "none"
 	}
-	if conf.Silenced == false {
+	if !conf.Silenced {
 		if err := client.WriteEvent(event); err == nil {
 			log.Infof("(alert=%s, severity=%s, status=%s) --> sent to Splunk", alert.Labels["alertname"], severity, alert.Status)
 		} else {
@@ -223,10 +225,10 @@ func webhook(w http.ResponseWriter, r *http.Request) {
 	confSync.Lock()
 	conf = loadedConf
 	confSync.Unlock()
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	data := template.Data{}
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
-		asJson(w, http.StatusBadRequest, err.Error())
+		asJSON(w, http.StatusBadRequest, err.Error())
 		log.Errorf("JSON decode error: %s", err.Error())
 		return
 	}
@@ -240,10 +242,10 @@ func webhook(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	asJson(w, http.StatusOK, "success")
+	asJSON(w, http.StatusOK, "success")
 }
 
-func healthz(w http.ResponseWriter, r *http.Request) {
+func healthz(w http.ResponseWriter, _ *http.Request) {
 	_, _ = fmt.Fprint(w, "Ok!")
 }
 
