@@ -6,7 +6,7 @@ toolchain go1.26.2
 
 require (
 	github.com/fuyufjh/splunk-hec-go v0.4.0
-	github.com/prometheus/alertmanager v0.32.0
+	github.com/prometheus/alertmanager v0.32.1
 	github.com/prometheus/common v0.67.5
 	github.com/sirupsen/logrus v1.9.4
 	gopkg.in/yaml.v3 v3.0.1
