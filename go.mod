@@ -1,22 +1,22 @@
 module alert-forwarder
 
-go 1.26
+go 1.26.0
 
 toolchain go1.26.2
 
 require (
 	github.com/fuyufjh/splunk-hec-go v0.4.0
 	github.com/prometheus/alertmanager v0.34.1
-	github.com/prometheus/common v0.71.0
+	github.com/prometheus/common v0.72.0
 	github.com/sirupsen/logrus v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/prometheus/client_model v0.6.2 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
+	github.com/prometheus/client_model v0.6.3 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
